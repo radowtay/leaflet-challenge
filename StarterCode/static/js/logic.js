@@ -6,35 +6,60 @@ var URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.ge
 // Perform a GET request to the query URL/
 d3.json(URL).then(function (data) {
     console.log(data);
-    // Once we get a response, send the data.features object to the createFeatures function.
     createFeatures(data.features);
-  });
+});
 
-
-    for (var i = 0; i < data.length; i++) {
-        L.circle(data[i].features.geometry.coordinates, {
-        // Setting our circle's radius to equal the output of our markerSize() function:
-        // This will make our marker's size proportionate to its population.
-        radius: markerSize(data[i].features.geometry.coordinates[2])
-        }).bindPopup(`<h1>${data[i].features.properties.place}</h1> <hr> <h3>${data[i].features.properties.time}</h3>`).addTo(myMap);
-  }
-
-  function createFeatures(earthquakeData) {
-
-    function onEachFeature(feature, layer) {
-      layer.bindPopup(`<h3>${feature.properties.place}</h3><hr><p>${new Date(feature.properties.time)}</p>`);
-    }
-  
     // Create a GeoJSON layer that contains the features array on the earthquakeData object.
     // Run the onEachFeature function once for each piece of data in the array.
-    var earthquakes = L.geoJSON(earthquakeData, {
-      onEachFeature: onEachFeature
-    });
-  
-    // Send our earthquakes layer to the createMap function/
+
+function createFeatures(earthquakeData){
+  function onEachFeature(features, layer) {
+    layer.bindPopup(`<h3>Location:${features.properties.place}</h3><hr><p>Depth:${(features.geometry.coordinates[2])}</p>`);
+  }
+
+function style(features){
+  var size = (features.properties.mag)*5;
+  var color;
+  var depth = features.geometry.coordinates[2];
+
+     if (depth <= 10 ) color = "#ff9980";
+        else if (depth >= 11 && depth <25) color = "#ff3300";
+        else if (depth >= 25 && depth <50) color = "#990073";
+        else if (depth >= 50 && depth <80) color = "#99004d";
+        else if (depth >=80 && depth <100 ) color = "#660033";
+        else color = "#4d0019";
+
+  // Setting our circle's radius to equal the output of our markerSize() function:
+  // This will make our marker's size proportionate to its population.
+ 
+  return {
+      fillOpacity: .80,
+      fillColor: color,
+      radius: size,
+    };
+
+}
+
+// function styleDepth(features){
+//   var shade = (features.geometry.coordinates[2]);
+//     return{
+//       color: shade,
+//     }
+// }
+var earthquakes = L.geoJSON(earthquakeData, {
+  onEachFeature: onEachFeature,
+  pointToLayer: function(features, latlong){
+    return L.circleMarker(latlong);
+  },
+  style:style,
+});
+
     createMap(earthquakes);
   }
-  
+
+
+    // Send our earthquakes layer to the createMap function/
+
   function createMap(earthquakes) {
   
     // Create the base layers.
@@ -57,10 +82,10 @@ d3.json(URL).then(function (data) {
       Earthquakes: earthquakes
     };
   
-    // Create our map, giving it the streetmap and earthquakes layers to display on load.
+    // Create our map, giving it the topographic and earthquakes layers to display on load.
     var myMap = L.map("map", {
       center: [
-        37.09, -20.71
+        20.00, -20.71
       ],
       zoom: 2,
       layers: [topo, earthquakes]
@@ -72,8 +97,7 @@ d3.json(URL).then(function (data) {
     L.control.layers(baseMaps, overlayMaps, {
       collapsed: false
     }).addTo(myMap);
-  
-   }
+}
 
 
   
@@ -96,9 +120,7 @@ d3.json(URL).then(function (data) {
 //         layer.bindPopup(`<h3>${feature.properties.place}</h3><hr><p>${new Date(feature.properties.time)}</p>`);
 //     }
 
-//     var earthquakes = L.geoJSON(earthquakeData, {
-//         onEachFeature: onEachFeature
-//     });
+
 //     createMap(earthquakes);
 // }
 
@@ -135,4 +157,4 @@ d3.json(URL).then(function (data) {
 //         }
 
 //     }
-//     myMap.addLayer(markers);
+    // myMap.addLayer(markers)
